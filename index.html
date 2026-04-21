@@ -1,636 +1,206 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>🍺 喝酒计数器</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #f5f5f5;
-      color: #333;
-      padding-bottom: 100px;
-    }
-    
-    .container {
-      max-width: 500px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    
-    /* 顶部统计 */
-    .stats-card {
-      background: #1a1a2e;
-      border-radius: 20px;
-      padding: 30px 20px;
-      text-align: center;
-      color: #fff;
-      margin-bottom: 20px;
-      position: relative;
-      overflow: hidden;
-    }
-    .stats-card::before {
-      content: '';
-      position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background: radial-gradient(circle, rgba(46,213,115,0.1) 0%, transparent 70%);
-      animation: pulse 3s ease-in-out infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.1); }
-    }
-    .big-number {
-      font-size: 72px;
-      font-weight: bold;
-      display: block;
-      position: relative;
-      z-index: 1;
-    }
-    .big-label {
-      font-size: 16px;
-      color: rgba(255,255,255,0.6);
-      margin-bottom: 20px;
-      position: relative;
-      z-index: 1;
-    }
-    .stats-row {
-      display: flex;
-      justify-content: center;
-      gap: 40px;
-      position: relative;
-      z-index: 1;
-    }
-    .stat-item {
-      text-align: center;
-    }
-    .stat-num {
-      font-size: 32px;
-      font-weight: bold;
-      display: block;
-    }
-    .stat-label {
-      font-size: 14px;
-      color: rgba(255,255,255,0.6);
-      margin-top: 4px;
-    }
-    .finish-tip {
-      margin-top: 15px;
-      padding: 10px 20px;
-      background: rgba(46,213,115,0.2);
-      border-radius: 10px;
-      color: #2ed573;
-      font-size: 16px;
-      font-weight: 500;
-      position: relative;
-      z-index: 1;
-      animation: bounce 0.5s ease;
-    }
-    @keyframes bounce {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-    }
-    
-    /* 卡片通用 */
-    .card {
-      background: #fff;
-      border-radius: 16px;
-      padding: 20px;
-      margin-bottom: 16px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-    }
-    .card-title {
-      font-size: 18px;
-      font-weight: bold;
-      color: #1a1a2e;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    
-    /* 输入 */
-    .input-group {
-      margin-bottom: 16px;
-    }
-    .input-label {
-      font-size: 14px;
-      color: #666;
-      margin-bottom: 8px;
-      display: block;
-    }
-    .input {
-      width: 100%;
-      height: 50px;
-      background: #f8f8f8;
-      border: 2px solid transparent;
-      border-radius: 12px;
-      padding: 0 16px;
-      font-size: 18px;
-      color: #333;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    .input:focus {
-      border-color: #1a1a2e;
-    }
-    
-    /* 人员列表 */
-    .person-list {
-      margin-bottom: 10px;
-    }
-    .person-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 0;
-      border-bottom: 1px solid #f5f5f5;
-    }
-    .person-item:last-child {
-      border-bottom: none;
-    }
-    .person-info {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex: 1;
-    }
-    .avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: #1a1a2e;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      font-weight: bold;
-    }
-    .person-name {
-      font-size: 16px;
-      color: #333;
-      font-weight: 500;
-    }
-    .delete-btn {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #ff4757;
-      font-size: 24px;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .delete-btn:hover {
-      background: #ffe0e0;
-    }
-    .delete-btn:active {
-      transform: scale(0.9);
-    }
-    
-    /* 添加按钮 */
-    .add-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 14px;
-      color: #2ed573;
-      font-size: 16px;
-      font-weight: 500;
-      cursor: pointer;
-      border-radius: 12px;
-      transition: background 0.2s;
-      border: 2px dashed #e0f7e9;
-    }
-    .add-btn:hover {
-      background: #f8fff8;
-      border-color: #2ed573;
-    }
-    .add-btn span {
-      font-size: 24px;
-      margin-right: 6px;
-    }
-    .empty-tip {
-      text-align: center;
-      color: #999;
-      font-size: 14px;
-      padding: 30px 0;
-    }
-    
-    /* 控制按钮 */
-    .controls {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-top: 12px;
-    }
-    .ctrl-btn {
-      height: 44px;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-      font-weight: 500;
-      cursor: pointer;
-      border: none;
-      outline: none;
-      transition: transform 0.1s, opacity 0.2s;
-      user-select: none;
-      -webkit-user-select: none;
-    }
-    .ctrl-btn:active {
-      transform: scale(0.95);
-    }
-    .ctrl-btn.minus {
-      width: 50px;
-      background: #ffe0e0;
-      color: #ff4757;
-    }
-    .ctrl-btn.minus5 {
-      width: 60px;
-      background: #ffe0e0;
-      color: #ff4757;
-    }
-    .ctrl-btn.plus {
-      width: 50px;
-      background: #e0f7e9;
-      color: #2ed573;
-    }
-    .ctrl-btn.plus5 {
-      width: 60px;
-      background: #e0f7e9;
-      color: #2ed573;
-    }
-    .direct-input {
-      flex: 1;
-      text-align: center;
-    }
-    .direct-input input {
-      width: 100%;
-      height: 44px;
-      background: #f8f8f8;
-      border: 2px solid transparent;
-      border-radius: 10px;
-      text-align: center;
-      font-size: 18px;
-      color: #333;
-      outline: none;
-    }
-    .direct-input input:focus {
-      border-color: #1a1a2e;
-    }
-    .direct-input .hint {
-      font-size: 11px;
-      color: #999;
-      margin-top: 4px;
-    }
-    
-    /* 主按钮 */
-    .main-btn {
-      width: 100%;
-      height: 56px;
-      background: #1a1a2e;
-      color: #fff;
-      font-size: 18px;
-      font-weight: bold;
-      border: none;
-      border-radius: 16px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: opacity 0.2s, transform 0.1s;
-      margin-top: 20px;
-    }
-    .main-btn:hover {
-      opacity: 0.9;
-    }
-    .main-btn:active {
-      transform: scale(0.98);
-    }
-    .main-btn:disabled {
-      background: #ccc;
-      cursor: not-allowed;
-    }
-    
-    /* 底部 */
-    .bottom-bar {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      padding: 12px 20px 24px;
-      background: #fff;
-      display: flex;
-      gap: 12px;
-      box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
-      z-index: 100;
-    }
-    .bottom-bar .btn {
-      flex: 1;
-      height: 50px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-      font-weight: 500;
-      cursor: pointer;
-      border: none;
-      transition: opacity 0.2s;
-    }
-    .btn-reset {
-      background: #f5f5f5;
-      color: #666;
-    }
-    .btn-back {
-      background: #1a1a2e;
-      color: #fff;
-    }
-    
-    /* 页面切换 */
-    .page {
-      display: none;
-    }
-    .page.active {
-      display: block;
-      animation: fadeIn 0.3s ease;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    
-    /* 响应式 */
-    @media (max-width: 400px) {
-      .container { padding: 15px; }
-      .big-number { font-size: 56px; }
-      .ctrl-btn { font-size: 14px; }
-      .ctrl-btn.minus, .ctrl-btn.plus { width: 44px; }
-      .ctrl-btn.minus5, .ctrl-btn.plus5 { width: 54px; }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🍺 喝酒计数器</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f5f5f5;color:#333;padding-bottom:100px}
+.container{max-width:500px;margin:0 auto;padding:20px}
+.stats-card{background:#1a1a2e;border-radius:20px;padding:30px 20px;text-align:center;color:#fff;margin-bottom:20px}
+.big-number{font-size:72px;font-weight:bold;display:block}
+.big-label{font-size:16px;color:rgba(255,255,255,0.6);margin-bottom:20px}
+.stats-row{display:flex;justify-content:center;gap:40px}
+.stat-item{text-align:center}
+.stat-num{font-size:32px;font-weight:bold;display:block}
+.stat-label{font-size:14px;color:rgba(255,255,255,0.6);margin-top:4px}
+.finish-tip{margin-top:15px;padding:10px 20px;background:rgba(46,213,115,0.2);border-radius:10px;color:#2ed573;font-size:16px;font-weight:500;display:none}
+.card{background:#fff;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 2px 12px rgba(0,0,0,0.06)}
+.card-title{font-size:18px;font-weight:bold;color:#1a1a2e;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.input-group{margin-bottom:16px}
+.input-label{font-size:14px;color:#666;margin-bottom:8px;display:block}
+.input{width:100%;height:50px;background:#f8f8f8;border:2px solid transparent;border-radius:12px;padding:0 16px;font-size:18px;color:#333;outline:none}
+.input:focus{border-color:#1a1a2e}
+.person-item{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #f5f5f5}
+.person-info{display:flex;align-items:center;gap:10px;flex:1}
+.avatar{width:40px;height:40px;border-radius:50%;background:#1a1a2e;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:bold}
+.person-name{font-size:16px;color:#333;font-weight:500}
+.delete-btn{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#ff4757;font-size:24px;cursor:pointer}
+.add-btn{display:flex;align-items:center;justify-content:center;padding:14px;color:#2ed573;font-size:16px;font-weight:500;cursor:pointer;border-radius:12px;border:2px dashed #e0f7e9;margin-top:10px}
+.empty-tip{text-align:center;color:#999;font-size:14px;padding:30px 0}
+.controls{display:flex;align-items:center;gap:8px;margin-top:12px}
+.ctrl-btn{height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:500;cursor:pointer;border:none;outline:none;user-select:none;-webkit-user-select:none}
+.ctrl-btn:active{transform:scale(0.95)}
+.ctrl-btn.minus,.ctrl-btn.plus{width:50px}
+.ctrl-btn.minus5,.ctrl-btn.plus5{width:60px}
+.ctrl-btn.minus,.ctrl-btn.minus5{background:#ffe0e0;color:#ff4757}
+.ctrl-btn.plus,.ctrl-btn.plus5{background:#e0f7e9;color:#2ed573}
+.direct-input{flex:1;text-align:center}
+.direct-input input{width:100%;height:44px;background:#f8f8f8;border:2px solid transparent;border-radius:10px;text-align:center;font-size:18px;color:#333;outline:none}
+.direct-input input:focus{border-color:#1a1a2e}
+.direct-input .hint{font-size:11px;color:#999;margin-top:4px}
+.main-btn{width:100%;height:56px;background:#1a1a2e;color:#fff;font-size:18px;font-weight:bold;border:none;border-radius:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-top:20px}
+.main-btn:disabled{background:#ccc;cursor:not-allowed}
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;padding:12px 20px 24px;background:#fff;display:flex;gap:12px;box-shadow:0 -4px 20px rgba(0,0,0,0.08);z-index:100}
+.bottom-bar .btn{flex:1;height:50px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:500;cursor:pointer;border:none}
+.btn-reset{background:#f5f5f5;color:#666}
+.btn-back{background:#1a1a2e;color:#fff}
+.page{display:none}
+.page.active{display:block}
+@media(max-width:400px){.container{padding:15px}.big-number{font-size:56px}.ctrl-btn{font-size:14px}.ctrl-btn.minus,.ctrl-btn.plus{width:44px}.ctrl-btn.minus5,.ctrl-btn.plus5{width:54px}}
+</style>
 </head>
 <body>
-  <!-- 设置页 -->
-  <div class="page active" id="setup-page">
-    <div class="container">
-      <div class="card">
-        <div class="card-title">🍺 设置这杯酒</div>
-        <div class="input-group">
-          <label class="input-label">总共几口</label>
-          <input type="number" class="input" id="total-sips" value="50" min="1" placeholder="比如 50">
-        </div>
-      </div>
-      
-      <div class="card">
-        <div class="card-title">👥 喝酒的人 <small id="people-count" style="color:#999;font-weight:normal;">(0/10)</small></div>
-        <div class="person-list" id="people-list">
-          <div class="empty-tip">还没加人呢，快叫上酒友！</div>
-        </div>
-        <div class="add-btn" id="add-person-btn">
-          <span>+</span>添加酒友
-        </div>
-      </div>
-      
-      <button class="main-btn" id="start-btn">开始喝！</button>
-    </div>
-  </div>
-  
-  <!-- 计数页 -->
-  <div class="page" id="counter-page">
-    <div class="container">
-      <div class="stats-card">
-        <span class="big-number" id="remain-num">50</span>
-        <span class="big-label">剩余口数</span>
-        <div class="stats-row">
-          <div class="stat-item">
-            <span class="stat-num" id="total-num">50</span>
-            <span class="stat-label">总共</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-num" id="drank-num">0</span>
-            <span class="stat-label">已喝</span>
-          </div>
-        </div>
-        <div class="finish-tip" id="finish-tip" style="display:none;">
-          🎉 干杯！这杯喝完了，续上！
-        </div>
-      </div>
-      
-      <div class="card">
-        <div class="card-title">👥 酒友战绩</div>
-        <div id="counter-list"></div>
-      </div>
-    </div>
-    
-    <div class="bottom-bar">
-      <button class="btn btn-reset" id="reset-btn">🔄 换一杯</button>
-      <button class="btn btn-back" id="back-btn">⚙️ 修改设置</button>
-    </div>
-  </div>
+<div class="page active" id="setup-page">
+<div class="container">
+<div class="card">
+<div class="card-title">🍺 设置每杯口数</div>
+<div class="input-group">
+<label class="input-label">每人每杯几口</label>
+<input type="number" class="input" id="total-sips" value="50" min="1">
+</div>
+</div>
+<div class="card">
+<div class="card-title">👥 喝酒的人 <small id="people-count" style="color:#999">(0/10)</small></div>
+<div class="person-list" id="people-list">
+<div class="empty-tip">还没加人呢，快叫上酒友！</div>
+</div>
+<div class="add-btn" id="add-person-btn"><span>+</span>添加酒友</div>
+</div>
+<button class="main-btn" id="start-btn">开始喝！</button>
+</div>
+</div>
 
-  <script>
-    // 数据
-    let totalSips = 50;
-    let people = [];
-    let nextId = 1;
-    
-    // 从 localStorage 加载
-    function loadData() {
-      const saved = localStorage.getItem('drinkingCounter');
-      if (saved) {
-        const data = JSON.parse(saved);
-        totalSips = data.totalSips || 50;
-        people = data.people || [];
-        nextId = data.nextId || 1;
-      }
-    }
-    
-    // 保存到 localStorage
-    function saveData() {
-      localStorage.setItem('drinkingCounter', JSON.stringify({
-        totalSips,
-        people,
-        nextId
-      }));
-    }
-    
-    // 渲染设置页
-    function renderSetup() {
-      document.getElementById('total-sips').value = totalSips;
-      document.getElementById('people-count').textContent = `(${people.length}/10)`;
-      
-      const listEl = document.getElementById('people-list');
-      if (people.length === 0) {
-        listEl.innerHTML = '<div class="empty-tip">还没加人呢，快叫上酒友！</div>';
-      } else {
-        listEl.innerHTML = people.map((p, i) => `
-          <div class="person-item">
-            <div class="person-info">
-              <div class="avatar">${p.name.charAt(0)}</div>
-              <span class="person-name">${p.name}</span>
-            </div>
-            <div class="delete-btn" data-id="${p.id}">×</div>
-          </div>
-        `).join('');
-      }
-      
-      const addBtn = document.getElementById('add-person-btn');
-      addBtn.style.display = people.length >= 10 ? 'none' : 'flex';
-      
-      const startBtn = document.getElementById('start-btn');
-      startBtn.disabled = people.length === 0;
-      startBtn.textContent = people.length > 0 ? '开始喝！' : '先加人吧';
-    }
-    
-    // 渲染计数页
-    function renderCounter() {
-      const drank = people.reduce((sum, p) => sum + (p.sips || 0), 0);
-      const remain = totalSips - drank;
-      
-      document.getElementById('remain-num').textContent = remain;
-      document.getElementById('total-num').textContent = totalSips;
-      document.getElementById('drank-num').textContent = drank;
-      
-      const finishTip = document.getElementById('finish-tip');
-      finishTip.style.display = remain <= 0 ? 'block' : 'none';
-      
-      // 进度环颜色
-      const statsCard = document.querySelector('.stats-card');
-      if (remain <= 0) {
-        statsCard.style.background = '#0f3460';
-      } else if (remain <= totalSips * 0.2) {
-        statsCard.style.background = '#c0392b';
-      } else {
-        statsCard.style.background = '#1a1a2e';
-      }
-      
-      const listEl = document.getElementById('counter-list');
-      listEl.innerHTML = people.map(p => `
-        <div style="padding: 15px 0; border-bottom: 1px solid #f5f5f5;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <span style="font-size:17px; font-weight:500; color:#333;">${p.name}</span>
-            <span style="font-size:20px; font-weight:bold; color:#1a1a2e;">${p.sips || 0} 口</span>
-          </div>
-          <div class="controls">
-            <button class="ctrl-btn minus" data-id="${p.id}" data-delta="-1">-1</button>
-            <button class="ctrl-btn minus5" data-id="${p.id}" data-delta="-5">-5</button>
-            <div class="direct-input">
-              <input type="number" value="${p.sips || 0}" data-id="${p.id}" class="sips-input">
-              <span class="hint">直接改数</span>
-            </div>
-            <button class="ctrl-btn plus5" data-id="${p.id}" data-delta="5">+5</button>
-            <button class="ctrl-btn plus" data-id="${p.id}" data-delta="1">+1</button>
-          </div>
-        </div>
-      `).join('');
-    }
-    
-    // 切换页面
-    function showPage(pageId) {
-      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      document.getElementById(pageId).classList.add('active');
-      window.scrollTo(0, 0);
-    }
-    
-    // 事件监听
-    document.addEventListener('click', function(e) {
-      // 删除人员
-      if (e.target.classList.contains('delete-btn')) {
-        const id = parseInt(e.target.dataset.id);
-        people = people.filter(p => p.id !== id);
-        saveData();
-        renderSetup();
-      }
-      
-      // 加减按钮
-      if (e.target.classList.contains('ctrl-btn')) {
-        const id = parseInt(e.target.dataset.id);
-        const delta = parseInt(e.target.dataset.delta);
-        const person = people.find(p => p.id === id);
-        if (person) {
-          person.sips = Math.max(0, (person.sips || 0) + delta);
-          saveData();
-          renderCounter();
-        }
-      }
-      
-      // 添加人员
-      if (e.target.closest('#add-person-btn')) {
-        if (people.length >= 10) {
-          alert('最多10人');
-          return;
-        }
-        const name = prompt('输入酒友名字：');
-        if (name && name.trim()) {
-          people.push({ id: nextId++, name: name.trim(), sips: 0 });
-          saveData();
-          renderSetup();
-        }
-      }
-      
-      // 开始按钮
-      if (e.target.id === 'start-btn') {
-        const val = parseInt(document.getElementById('total-sips').value) || 0;
-        if (val <= 0) {
-          alert('总口数要大于0');
-          return;
-        }
-        totalSips = val;
-        saveData();
-        renderCounter();
-        showPage('counter-page');
-      }
-      
-      // 重置
-      if (e.target.id === 'reset-btn') {
-        if (confirm('重置所有人的口数？')) {
-          people.forEach(p => p.sips = 0);
-          saveData();
-          renderCounter();
-        }
-      }
-      
-      // 返回
-      if (e.target.id === 'back-btn') {
-        showPage('setup-page');
-        renderSetup();
-      }
-    });
-    
-    // 直接输入改数
-    document.addEventListener('blur', function(e) {
-      if (e.target.classList.contains('sips-input')) {
-        const id = parseInt(e.target.dataset.id);
-        const val = parseInt(e.target.value) || 0;
-        const person = people.find(p => p.id === id);
-        if (person) {
-          person.sips = Math.max(0, val);
-          saveData();
-          renderCounter();
-        }
-      }
-    }, true);
-    
-    // 输入框回车
-    document.addEventListener('keypress', function(e) {
-      if (e.target.classList.contains('sips-input') && e.key === 'Enter') {
-        e.target.blur();
-      }
-    });
-    
-    // 初始化
-    loadData();
-    renderSetup();
-  </script>
+<div class="page" id="counter-page">
+<div class="container">
+<div class="stats-card" id="stats-card">
+<span class="big-number" id="remain-num">50</span>
+<span class="big-label">剩余口数</span>
+<div class="stats-row">
+<div class="stat-item"><span class="stat-num" id="total-num">50</span><span class="stat-label">总共</span></div>
+<div class="stat-item"><span class="stat-num" id="drank-num">0</span><span class="stat-label">已喝</span></div>
+</div>
+<div class="finish-tip" id="finish-tip">🎉 干杯！这杯喝完了！</div>
+</div>
+<div class="card">
+<div class="card-title">👥 酒友战绩（各自独立）</div>
+<div id="counter-list"></div>
+</div>
+</div>
+<div class="bottom-bar">
+<button class="btn btn-reset" id="reset-btn">🔄 换一杯</button>
+<button class="btn btn-back" id="back-btn">⚙️ 修改设置</button>
+</div>
+</div>
+
+<script>
+let totalSips=50,people=[],nextId=1;
+
+function loadData(){
+const saved=localStorage.getItem('drinkingCounter');
+if(saved){
+const d=JSON.parse(saved);
+totalSips=d.totalSips||50;
+people=d.people||[];
+nextId=d.nextId||1;
+}
+}
+
+function saveData(){
+localStorage.setItem('drinkingCounter',JSON.stringify({totalSips,people,nextId}));
+}
+
+function renderSetup(){
+document.getElementById('total-sips').value=totalSips;
+document.getElementById('people-count').textContent=`(${people.length}/10)`;
+const list=document.getElementById('people-list');
+if(people.length===0){
+list.innerHTML='<div class="empty-tip">还没加人呢，快叫上酒友！</div>';
+}else{
+list.innerHTML=people.map(p=>`<div class="person-item"><div class="person-info"><div class="avatar">${p.name.charAt(0)}</div><span class="person-name">${p.name}</span></div><div class="delete-btn" data-id="${p.id}">×</div></div>`).join('');
+}
+document.getElementById('add-person-btn').style.display=people.length>=10?'none':'flex';
+const btn=document.getElementById('start-btn');
+btn.disabled=people.length===0;
+btn.textContent=people.length>0?'开始喝！':'先加人吧';
+}
+
+function renderCounter(){
+const drankAll=people.reduce((s,p)=>s+(p.sips||0),0);
+const remainAll=people.length*totalSips-drankAll;
+document.getElementById('remain-num').textContent=remainAll;
+document.getElementById('total-num').textContent=people.length*totalSips;
+document.getElementById('drank-num').textContent=drankAll;
+const finish=document.getElementById('finish-tip');
+finish.style.display=remainAll<=0?'block':'none';
+
+const card=document.getElementById('stats-card');
+card.style.background=remainAll<=0?'#0f3460':remainAll<=people.length*totalSips*0.2?'#c0392b':'#1a1a2e';
+
+document.getElementById('counter-list').innerHTML=people.map(p=>{
+const remain=totalSips-(p.sips||0);
+return `<div style="padding:15px 0;border-bottom:1px solid #f5f5f5;">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+<span style="font-size:17px;font-weight:500;color:#333;">${p.name}</span>
+<span style="font-size:14px;color:#666;">剩余 ${remain} / 共 ${totalSips}</span>
+</div>
+<div style="font-size:28px;font-weight:bold;color:#1a1a2e;margin-bottom:12px;">已喝 ${p.sips||0} 口</div>
+<div class="controls">
+<button class="ctrl-btn minus" data-id="${p.id}" data-delta="-1">-1</button>
+<button class="ctrl-btn minus5" data-id="${p.id}" data-delta="-5">-5</button>
+<div class="direct-input">
+<input type="number" value="${p.sips||0}" data-id="${p.id}" class="sips-input">
+<span class="hint">直接改已喝</span>
+</div>
+<button class="ctrl-btn plus5" data-id="${p.id}" data-delta="5">+5</button>
+<button class="ctrl-btn plus" data-id="${p.id}" data-delta="1">+1</button>
+</div>
+</div>`;
+}).join('');
+}
+
+function showPage(id){
+document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+document.getElementById(id).classList.add('active');
+window.scrollTo(0,0);
+}
+
+document.addEventListener('click',e=>{
+if(e.target.classList.contains('delete-btn')){
+people=people.filter(p=>p.id!=e.target.dataset.id);
+saveData();renderSetup();
+}
+if(e.target.classList.contains('ctrl-btn')){
+const id=parseInt(e.target.dataset.id);
+const delta=parseInt(e.target.dataset.delta);
+const p=people.find(p=>p.id===id);
+if(p){p.sips=(p.sips||0)+delta;saveData();renderCounter();}
+}
+if(e.target.closest('#add-person-btn')){
+if(people.length>=10)return alert('最多10人');
+const name=prompt('输入酒友名字：');
+if(name?.trim()){people.push({id:nextId++,name:name.trim(),sips:0});saveData();renderSetup();}
+}
+if(e.target.id==='start-btn'){
+const v=parseInt(document.getElementById('total-sips').value)||0;
+if(v<=0)return alert('口数要大于0');
+totalSips=v;saveData();renderCounter();showPage('counter-page');
+}
+if(e.target.id==='reset-btn'){
+if(confirm('所有人重新开一杯？')){people.forEach(p=>p.sips=0);saveData();renderCounter();}
+}
+if(e.target.id==='back-btn'){showPage('setup-page');renderSetup();}
+});
+
+document.addEventListener('blur',e=>{
+if(e.target.classList.contains('sips-input')){
+const p=people.find(p=>p.id==e.target.dataset.id);
+if(p){p.sips=parseInt(e.target.value)||0;saveData();renderCounter();}
+}
+},true);
+
+loadData();renderSetup();
+</script>
 </body>
 </html>
