@@ -255,6 +255,12 @@ body{
   font-size:0.7rem;
   opacity:0.6;
 }
+.player-cup-info{
+  font-size:0.75rem;
+  opacity:0.8;
+  margin-top:2px;
+  color:#4cd964;
+}
 
 .action-btn{
   width:100%;
@@ -370,7 +376,7 @@ function loadData(){
   if(saved){
     const d = JSON.parse(saved);
     totalSips = d.totalSips || 50;
-    people = d.people || [];
+    people = (d.people || []).map(p => ({...p, cups: p.cups || 0, sips: p.sips || 0}));
     nextId = d.nextId || 1;
   }
 }
@@ -416,8 +422,10 @@ function renderSetup(){
 function renderCounter(){
   // 渲染每个人的卡片
   document.getElementById('player-cards').innerHTML = people.map(p => {
-    const remain = Math.max(0, totalSips - (p.sips || 0));
-    const drank = p.sips || 0;
+    const sips = p.sips || 0;
+    const cups = p.cups || 0;
+    const remain = Math.max(0, totalSips - sips);
+    const totalDrank = cups * totalSips + sips;
     const emoji = getAvatarEmoji(p.name, remain);
     const avatarGrad = remain <= 0
       ? 'linear-gradient(135deg,#ff6b6b,#ee5a5a)'
@@ -432,7 +440,7 @@ function renderCounter(){
           <div class="player-avatar" style="background:${avatarGrad}">${emoji}</div>
           <span>${p.name}</span>
         </div>
-        <div class="player-status">已喝 ${drank} 口</div>
+        <div class="player-status">累计 ${totalDrank} 口 · 第 ${cups+1} 杯</div>
       </div>
       <div class="player-board">
         <!-- 左侧：减去 -->
@@ -450,6 +458,7 @@ function renderCounter(){
         <div class="player-center">
           <div class="player-mouth" id="mouth-${p.id}">${remain}</div>
           <div class="player-mouth-label">剩余口数</div>
+          <div class="player-cup-info">第 ${cups+1} 杯 · 累计 ${totalDrank} 口</div>
         </div>
 
         <!-- 右侧：加上 -->
@@ -482,24 +491,27 @@ function adj(id, delta, side){
 function drink(id){
   const val = parseInt(document.getElementById('left-' + id).value || 0);
   const p = people.find(p => p.id === id);
-  if(p){
-    const currentRemain = Math.max(0, totalSips - (p.sips || 0));
-    const newRemain = Math.max(0, currentRemain - val);
-    p.sips = totalSips - newRemain;
-    saveData();
-    renderCounter();
+  if(!p) return;
+  const currentRemain = Math.max(0, totalSips - (p.sips || 0));
+  const newRemain = Math.max(0, currentRemain - val);
+  p.sips = totalSips - newRemain;
+  // 当前杯喝完，自动进入下一杯
+  if(newRemain === 0){
+    p.cups = (p.cups || 0) + 1;
+    p.sips = 0;
   }
+  saveData();
+  renderCounter();
 }
 
 function add(id){
   const val = parseInt(document.getElementById('right-' + id).value || 0);
   const p = people.find(p => p.id === id);
-  if(p){
-    const currentRemain = Math.max(0, totalSips - (p.sips || 0));
-    p.sips = totalSips - (currentRemain + val);
-    saveData();
-    renderCounter();
-  }
+  if(!p) return;
+  const currentRemain = Math.max(0, totalSips - (p.sips || 0));
+  p.sips = totalSips - (currentRemain + val);
+  saveData();
+  renderCounter();
 }
 
 // 直接修改剩余口数（输入框失去焦点时）
@@ -526,7 +538,7 @@ document.addEventListener('click', e => {
     if(people.length >= 10) return alert('最多10人');
     const name = prompt('输入酒友名字：');
     if(name?.trim()){
-      people.push({id: nextId++, name: name.trim(), sips: 0});
+      people.push({id: nextId++, name: name.trim(), sips: 0, cups: 0});
       saveData();
       renderSetup();
     }
@@ -540,10 +552,10 @@ document.addEventListener('click', e => {
     renderCounter();
     showPage('counter-page');
   }
-  // 换一杯
+  // 换一杯（所有人新开一杯，cups+1）
   if(e.target.id === 'reset-btn'){
-    if(confirm('所有人重新开一杯？')){
-      people.forEach(p => p.sips = 0);
+    if(confirm('所有人新开一杯？')){
+      people.forEach(p => { p.cups = (p.cups || 0) + 1; p.sips = 0; });
       saveData();
       renderCounter();
     }
